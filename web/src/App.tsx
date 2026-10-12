@@ -22,7 +22,9 @@ export default function App() {
             <ChatPage authVersion={authVersion} onUnauthorized={handleUnauthorized} onReplied={refresh} />
           </section>
           {view === "devices" && <DevicesPage />}
-          {view === "automations" && <AutomationsPage />}
+          {view === "automations" && (
+            <AutomationsPage n8nConfigured={health?.services.n8n.configured ?? false} onUnauthorized={handleUnauthorized} />
+          )}
           {view === "settings" && <SettingsPage health={health} onTokenSaved={handleTokenSaved} />}
         </main>
       </div>

@@ -13,6 +13,8 @@ class Settings:
     history_limit: int = 20
     request_timeout: float = 120.0
     api_token: str = ""
+    n8n_url: str = ""
+    data_dir: str = "/data"
 
     @classmethod
     def from_env(cls, env=None):
@@ -25,4 +27,6 @@ class Settings:
             think=env.get("BLOPA_THINK", "false").strip().lower() in ("1", "true", "yes"),
             timezone=env.get("BLOPA_TIMEZONE", cls.timezone),
             api_token=env.get("BLOPA_API_TOKEN", "").strip(),
+            n8n_url=env.get("N8N_URL", "").strip().rstrip("/"),
+            data_dir=env.get("BLOPA_DATA_DIR", cls.data_dir),
         )

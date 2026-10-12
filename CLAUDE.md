@@ -109,6 +109,8 @@ src/
 | `BLOPA_API_TOKEN` | *(empty for dev)* | Protects web and API access |
 | `BLOPA_BIND` | `0.0.0.0` | Who can access the web server |
 | `BLOPA_PORT` | `8000` | Web server port |
+| `BLOPA_DATA_DIR` | `/data` | SQLite location (volume `blopa_data`) |
+| `N8N_URL` | `http://n8n:5678` | n8n base URL; empty disables automations |
 | `HA_URL` / `HA_TOKEN` | *(empty)* | Home Assistant URL and token |
 | `BLOPA_WHISPER_MODEL` | `small` | Transcription model |
 
@@ -117,6 +119,8 @@ src/
 - No router ports open. Ollama is not exposed; n8n webhooks only on the internal Docker network and its editor only on `127.0.0.1`.
 - Optional `BLOPA_API_TOKEN` protects web and API access.
 - Closed list of actions per device type; sensitive actions always ask for confirmation.
+- Confirmation is enforced by the agent (`Tool.confirmation_for`), never left to the model.
+- Automations store only an n8n webhook path; the URL is built from `N8N_URL`.
 - `read_page` blocks private and local IPs (router, n8n, Home Assistant).
 - Secrets never go into Git.
 
@@ -137,7 +141,7 @@ Text (Electron/web/API)─┘        │
 1. Message arrives (text or transcribed voice).
 2. Agent sends the model: system prompt, history (~20 messages) and tool list.
 3. If the model requests a tool:
-   - **Sensitive action:** stop and ask for confirmation.
+   - **Sensitive action** (`confirmation_for` returns a description): stop, ask, keep the pending action; "sí" runs it, "no" cancels, anything else cancels and is answered normally.
    - **Normal action:** execute and return the result to the model.
 4. Maximum 5 steps; then force a final response.
 
@@ -151,7 +155,7 @@ Text (Electron/web/API)─┘        │
 | `home_list_devices` | List Home Assistant devices | No |
 | `home_device_status` | Status of a device | No |
 | `home_control_device` | Actions on a device | By device type |
-| `run_automation` | Trigger an n8n flow | Yes, by default |
+| `run_automation` | Trigger a registered n8n flow | Yes, by default (per automation) |
 
 ### Project structure
 
@@ -169,6 +173,16 @@ blopa/
 │   ├── server.py
 │   ├── sessions.py
 │   ├── auth.py
+│   ├── database.py
+│   ├── confirmation.py
+│   ├── routes/
+│   │   ├── health.py
+│   │   ├── chat.py
+│   │   └── automations.py
+│   ├── automations/
+│   │   ├── models.py
+│   │   ├── repository.py
+│   │   └── runner.py
 │   ├── voice.py
 │   ├── concerns/
 │   │   ├── conversation_memory.py
@@ -182,8 +196,8 @@ blopa/
 │       ├── date_time.py
 │       ├── search_web.py
 │       ├── read_page.py
-│       ├── home_assistant.py
-│       └── n8n.py
+│       ├── run_automation.py
+│       └── home_assistant.py
 ├── web/                 Vite + React app (see React rules)
 ├── electron/
 │   ├── package.json

@@ -22,6 +22,8 @@ services:
       - ollama
     ports:
       - "${BLOPA_BIND:-127.0.0.1}:${BLOPA_PORT:-8000}:8000"
+    volumes:
+      - blopa_data:/data
     stdin_open: true
     tty: true
 
@@ -68,6 +70,7 @@ services:
       - "127.0.0.1:5173:5173"
 
 volumes:
+  blopa_data:
   ollama_data:
   n8n_data:
   web_node_modules:

@@ -6,6 +6,12 @@ class Tool:
     def call(self, **arguments):
         raise NotImplementedError
 
+    def available(self):
+        return True
+
+    def confirmation_for(self, **arguments):
+        return None
+
     def schema(self):
         return {
             "type": "function",

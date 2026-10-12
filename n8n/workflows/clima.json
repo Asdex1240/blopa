@@ -1,0 +1,79 @@
+{
+  "id": "blopaClima000001",
+  "name": "BLOPA clima",
+  "active": true,
+  "nodes": [
+    {
+      "id": "3a5c7e90-1b2d-4f6a-8c0e-2d4f6a8c0e11",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "7c1e3a5b-9d2f-4b6a-8e0c-1f3a5c7e9b22",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clima",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "5b7d9f12-3c4e-4a6b-8d0f-4e6a8c0e2f33",
+      "name": "Geocodificar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0],
+      "parameters": {
+        "url": "https://geocoding-api.open-meteo.com/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "name", "value": "={{ ($json.body.text || '').trim() || 'Monterrey' }}" },
+            { "name": "count", "value": "1" },
+            { "name": "language", "value": "es" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      }
+    },
+    {
+      "id": "7d9f1b34-5e6a-4c8d-8f2b-6a8c0e2f4b44",
+      "name": "Pronostico",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0],
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "latitude", "value": "={{ $json.results?.[0]?.latitude ?? 25.68435 }}" },
+            { "name": "longitude", "value": "={{ $json.results?.[0]?.longitude ?? -100.31721 }}" },
+            { "name": "current", "value": "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m" },
+            { "name": "daily", "value": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" },
+            { "name": "timezone", "value": "auto" },
+            { "name": "forecast_days", "value": "3" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      }
+    },
+    {
+      "id": "9f1b3d56-7a8c-4e0f-8b4d-8c0e2f4b6d55",
+      "name": "Resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 0],
+      "parameters": {
+        "jsCode": "const CONDITIONS = {\n  0: 'despejado',\n  1: 'mayormente despejado',\n  2: 'parcialmente nublado',\n  3: 'nublado',\n  45: 'con niebla',\n  48: 'con niebla',\n  51: 'con llovizna ligera',\n  53: 'con llovizna',\n  55: 'con llovizna intensa',\n  56: 'con llovizna helada',\n  57: 'con llovizna helada',\n  61: 'con lluvia ligera',\n  63: 'con lluvia',\n  65: 'con lluvia fuerte',\n  66: 'con lluvia helada',\n  67: 'con lluvia helada',\n  71: 'con nieve ligera',\n  73: 'con nieve',\n  75: 'con nieve fuerte',\n  77: 'con granizo fino',\n  80: 'con chubascos ligeros',\n  81: 'con chubascos',\n  82: 'con chubascos fuertes',\n  85: 'con chubascos de nieve',\n  86: 'con chubascos de nieve',\n  95: 'con tormenta',\n  96: 'con tormenta y granizo',\n  99: 'con tormenta y granizo fuerte',\n};\nconst DAY_NAMES = ['Hoy', 'Mañana', 'Pasado mañana'];\n\nconst describe = (code) => CONDITIONS[code] ?? 'con condiciones variables';\nconst round = (value) => Math.round(value);\n\nconst requested = ($('Webhook').first().json.body?.text || '').trim() || 'Monterrey';\nconst place = $('Geocodificar').first().json.results?.[0];\nconst location = place\n  ? [place.name, place.admin1, place.country].filter(Boolean).join(', ')\n  : 'Monterrey, Nuevo León, México';\nconst { current, daily } = $input.first().json;\n\nconst days = daily.time.map((date, index) => ({\n  date,\n  condition: describe(daily.weather_code[index]),\n  min: round(daily.temperature_2m_min[index]),\n  max: round(daily.temperature_2m_max[index]),\n  rain_probability: daily.precipitation_probability_max[index],\n}));\n\nconst notFound = place ? '' : `No encontré «${requested}»; te doy el de Monterrey. `;\nconst now = `Ahora en ${location}: ${round(current.temperature_2m)} °C, sensación de ${round(current.apparent_temperature)} °C, ${describe(current.weather_code)}, humedad de ${current.relative_humidity_2m}% y viento de ${round(current.wind_speed_10m)} km/h.`;\nconst forecast = days\n  .map((day, index) => `${DAY_NAMES[index]}: ${day.condition}, entre ${day.min} y ${day.max} °C, ${day.rain_probability}% de probabilidad de lluvia.`)\n  .join(' ');\n\nreturn [{\n  json: {\n    summary: `${notFound}${now} ${forecast} Fuente: Open-Meteo.`,\n    location,\n    current: {\n      temperature: current.temperature_2m,\n      feels_like: current.apparent_temperature,\n      humidity: current.relative_humidity_2m,\n      wind_kmh: current.wind_speed_10m,\n      condition: describe(current.weather_code),\n      time: current.time,\n    },\n    days,\n  },\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Geocodificar", "type": "main", "index": 0 }]] },
+    "Geocodificar": { "main": [[{ "node": "Pronostico", "type": "main", "index": 0 }]] },
+    "Pronostico": { "main": [[{ "node": "Resumen", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

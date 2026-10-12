@@ -1,5 +1,6 @@
 import { storage } from "@/lib/storage"
-import type { Health, HistoryMessage, Reply } from "@/presentation/types/api/types"
+import type { Health, History, Reply } from "@/presentation/types/api/types"
+import type { Automation, AutomationInput, AutomationRun } from "@/presentation/types/automations/types"
 
 export const TOKEN_KEY = "blopa_token"
 
@@ -41,7 +42,13 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 export const api = {
   health: () => request<Health>("GET", "/health"),
-  listMessages: () => request<{ messages: HistoryMessage[] }>("GET", "/chat/messages"),
+  listMessages: () => request<History>("GET", "/chat/messages"),
   createMessage: (text: string) => request<Reply>("POST", "/chat/messages", { text }),
   deleteMessages: () => request<void>("DELETE", "/chat/messages"),
+  listAutomations: () => request<{ automations: Automation[] }>("GET", "/automations"),
+  createAutomation: (input: AutomationInput) => request<Automation>("POST", "/automations", input),
+  updateAutomation: (id: number, input: Partial<AutomationInput>) => request<Automation>("PATCH", `/automations/${id}`, input),
+  deleteAutomation: (id: number) => request<void>("DELETE", `/automations/${id}`),
+  createRun: (id: number, text = "") => request<AutomationRun>("POST", `/automations/${id}/runs`, { text }),
+  listRuns: (limit = 20) => request<{ runs: AutomationRun[] }>("GET", `/automation-runs?limit=${limit}`),
 }

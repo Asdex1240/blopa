@@ -2,7 +2,9 @@ export type ChatRole = "user" | "assistant"
 
 export type HistoryMessage = { role: ChatRole; content: string }
 
-export type Reply = { text: string; tools_used: string[]; elapsed: number }
+export type Reply = { text: string; tools_used: string[]; confirmation: string | null; elapsed: number }
+
+export type History = { messages: HistoryMessage[]; confirmation: string | null }
 
 export type OllamaStatus = { reachable: boolean; model_available: boolean; model_loaded: boolean }
 
@@ -14,7 +16,7 @@ export type Health = {
   tools: string[]
   services: {
     ollama: OllamaStatus
-    n8n: { configured: boolean }
+    n8n: { configured: boolean; reachable: boolean }
     home_assistant: { configured: boolean }
   }
 }

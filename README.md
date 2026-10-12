@@ -55,13 +55,20 @@ n8n runs locally with the `n8n` profile (enabled by default in `.env.example`). 
 
 Workflows in `n8n/workflows/` can be imported and published from the command line:
 
+| Workflow | Webhook | What it does |
+|---|---|---|
+| `blopa-ping.json` | `blopa-ping` | Echoes the text it receives; connection test |
+| `clima.json` | `clima` | Current weather and 3-day forecast from Open-Meteo for the city in the text (Monterrey by default) |
+
 ```bash
-docker compose exec n8n n8n import:workflow --input=/workflows/blopa-ping.json
-docker compose exec n8n n8n publish:workflow --id=blopaPing0000001
+docker compose exec n8n n8n import:workflow --input=/workflows/clima.json
+docker compose exec n8n n8n publish:workflow --id=blopaClima000001
 docker compose restart n8n
 ```
 
 BLOPA reaches webhooks through the internal Docker network, e.g. `http://n8n:5678/webhook/blopa-ping`.
+
+To let BLOPA launch a workflow, register it in **Automatizaciones** with a name, a description (BLOPA reads it to decide when to use it) and the webhook path. Automations ask for confirmation by default: BLOPA describes the action and waits for "sí" / "no", or the "Sí, hazlo" / "No" buttons. Every run, from chat or panel, is recorded in the history.
 
 ### Terminal
 
@@ -82,6 +89,10 @@ docker compose run --rm blopa python -m app.cli
 | `GET` | `/chat/messages` | Current conversation |
 | `POST` | `/chat/messages` | Send `{"text": "..."}`; returns the reply and the tools used |
 | `DELETE` | `/chat/messages` | Start a new conversation |
+| `GET` / `POST` | `/automations` | List or register n8n automations |
+| `PATCH` / `DELETE` | `/automations/{id}` | Edit or remove an automation |
+| `GET` / `POST` | `/automations/{id}/runs` | History of one automation, or run it now |
+| `GET` | `/automation-runs` | Latest runs of all automations |
 
 Each client gets its own conversation through a session cookie. When `BLOPA_API_TOKEN` is set, chat routes require `Authorization: Bearer <token>`.
 
@@ -101,6 +112,8 @@ All settings live in `.env`.
 | `BLOPA_API_TOKEN` | *(empty)* | Protects the chat API; recommended outside development |
 | `BLOPA_BIND` | `0.0.0.0` | `127.0.0.1` for this machine only, `0.0.0.0` for the home network |
 | `BLOPA_PORT` | `8000` | Web server port |
+| `BLOPA_DATA_DIR` | `/data` | SQLite location inside the container (volume `blopa_data`) |
+| `N8N_URL` | `http://n8n:5678` | n8n base URL; empty disables automations |
 
 To use a native Ollama install instead of the container, set `OLLAMA_URL=http://host.docker.internal:11434`.
 
@@ -127,7 +140,11 @@ app/
 ├── server.py        HTTP API and web interface
 ├── sessions.py      one conversation per client
 ├── auth.py          optional access token
-├── tools/           date_time, search_web, read_page
+├── database.py      SQLite schema
+├── confirmation.py  yes / no detection for sensitive actions
+├── routes/          health, chat and automations endpoints
+├── automations/     repository and n8n webhook runner
+├── tools/           date_time, search_web, read_page, run_automation
 ├── search/          search engines (DuckDuckGo)
 └── concerns/        shared mixins
 web/                 browser interface (Vite + React + Tailwind + shadcn/ui)

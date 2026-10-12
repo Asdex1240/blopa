@@ -3,7 +3,19 @@ class ToolRegistry:
         self.tools = {tool.name: tool for tool in tools}
 
     def schemas(self):
-        return [tool.schema() for tool in self.tools.values()]
+        return [tool.schema() for tool in self.tools.values() if tool.available()]
+
+    def names(self):
+        return [tool.name for tool in self.tools.values()]
+
+    def confirmation_for(self, name, arguments):
+        tool = self.tools.get(name)
+        if tool is None:
+            return None
+        try:
+            return tool.confirmation_for(**(arguments or {}))
+        except TypeError:
+            return None
 
     def run(self, name, arguments):
         tool = self.tools.get(name)

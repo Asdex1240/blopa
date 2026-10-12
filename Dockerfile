@@ -22,7 +22,9 @@ RUN pip install -r requirements.txt
 COPY app ./app
 COPY --from=web /web/dist ./web/dist
 
-RUN useradd --system --no-create-home blopa
+RUN useradd --system --no-create-home blopa \
+    && mkdir -p /data \
+    && chown blopa /data
 USER blopa
 
 EXPOSE 8000

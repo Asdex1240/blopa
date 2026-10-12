@@ -13,7 +13,11 @@ type Props = {
 }
 
 export default function ChatPage({ authVersion, onUnauthorized, onReplied }: Props) {
-  const { messages, busy, endRef, handleSend, handleReset } = useChatPage({ authVersion, onUnauthorized, onReplied })
+  const { messages, busy, confirmation, endRef, handleSend, handleReset, handleConfirm, handleCancel } = useChatPage({
+    authVersion,
+    onUnauthorized,
+    onReplied,
+  })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 pb-6">
@@ -23,7 +27,14 @@ export default function ChatPage({ authVersion, onUnauthorized, onReplied }: Pro
           Nueva conversación
         </Button>
       </PageHeader>
-      <MessageList messages={messages} busy={busy} endRef={endRef} />
+      <MessageList
+        messages={messages}
+        busy={busy}
+        confirmation={confirmation}
+        endRef={endRef}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
       <ChatComposer busy={busy} onSend={handleSend} />
     </div>
   )

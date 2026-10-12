@@ -1,6 +1,6 @@
 import type { FormEvent } from "react"
 
-import { SectionTitle } from "./Components"
+import { SectionTitle } from "@/presentation/pages/shared/SectionTitle"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"

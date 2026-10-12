@@ -9,3 +9,7 @@ export const MIC_COLOR: Record<MicrophoneState, string> = {
   ready: "text-success",
   denied: "text-destructive",
 }
+
+export const CONFIRM_TEXT = "Sí, hazlo"
+
+export const CANCEL_TEXT = "No"

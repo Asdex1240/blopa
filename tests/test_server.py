@@ -18,12 +18,13 @@ class FakeAgent:
         self.error = error
         self.history = []
         self.registry = ToolRegistry()
+        self.pending_confirmation = None
 
     def reply(self, text):
         if self.error:
             raise self.error
         self.history += [{"role": "user", "content": text}, {"role": "assistant", "content": f"eco {text}"}]
-        return Reply(f"eco {text}", ["search_web"])
+        return Reply(f"eco {text}", ["search_web"], confirmation=None)
 
     def reset(self):
         self.history = []
@@ -38,7 +39,7 @@ def test_health_reports_services():
     health = client_for().get("/health").json()
     assert health["status"] == "ok"
     assert health["services"]["ollama"]["reachable"] is True
-    assert health["services"]["n8n"] == {"configured": False}
+    assert health["services"]["n8n"] == {"configured": False, "reachable": False}
     assert health["auth_required"] is False
 
 

@@ -6,6 +6,7 @@ export type ChatMessage = {
   text: string
   tools?: string[]
   elapsed?: number
+  confirmation?: string | null
 }
 
 export type MicrophoneState = "unknown" | "ready" | "denied"

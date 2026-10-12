@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { api, ApiError } from "@/lib/api"
-import { GREETING } from "@/presentation/constants/chat/constants"
+import { CANCEL_TEXT, CONFIRM_TEXT, GREETING } from "@/presentation/constants/chat/constants"
 import type { ChatMessage } from "@/presentation/types/chat/types"
 
 type Options = {
@@ -15,6 +15,7 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
   const endRef = useRef<HTMLDivElement>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [busy, setBusy] = useState(false)
+  const [confirmation, setConfirmation] = useState<string | null>(null)
 
   const build = useCallback(
     (message: Omit<ChatMessage, "id">): ChatMessage => ({ ...message, id: nextId.current++ }),
@@ -34,7 +35,8 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
 
   const loadHistory = useCallback(async () => {
     try {
-      const { messages: history } = await api.listMessages()
+      const { messages: history, confirmation: pending } = await api.listMessages()
+      setConfirmation(pending)
       if (!history.length) return greet()
       setMessages(history.map((message) => build({ role: message.role, text: message.content })))
     } catch (error) {
@@ -46,6 +48,7 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
   const handleSend = useCallback(
     async (text: string) => {
       setMessages((current) => [...current, build({ role: "user", text })])
+      setConfirmation(null)
       setBusy(true)
       try {
         const reply = await api.createMessage(text)
@@ -53,6 +56,7 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
           ...current,
           build({ role: "assistant", text: reply.text || "(sin respuesta)", tools: reply.tools_used, elapsed: reply.elapsed }),
         ])
+        setConfirmation(reply.confirmation)
       } catch (error) {
         handleError(error)
       } finally {
@@ -66,6 +70,7 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
   const handleReset = useCallback(async () => {
     try {
       await api.deleteMessages()
+      setConfirmation(null)
       greet()
     } catch (error) {
       handleError(error)
@@ -78,7 +83,11 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" })
-  }, [messages, busy])
+  }, [messages, busy, confirmation])
 
-  return { messages, busy, endRef, handleSend, handleReset }
+  const handleConfirm = useCallback(() => handleSend(CONFIRM_TEXT), [handleSend])
+
+  const handleCancel = useCallback(() => handleSend(CANCEL_TEXT), [handleSend])
+
+  return { messages, busy, confirmation, endRef, handleSend, handleReset, handleConfirm, handleCancel }
 }
