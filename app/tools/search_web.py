@@ -8,8 +8,8 @@ from app.tools.base import Tool
 class SearchWebTool(TimeLimited, TruncatesText, Tool):
     name = "search_web"
     description = (
-        "Busca en internet información actual: noticias, precios, clima, vuelos, eventos, "
-        "resultados deportivos o cualquier dato que pueda haber cambiado. "
+        "Busca en internet información actual. Úsala siempre para precios, tipo de cambio, clima, "
+        "noticias, resultados deportivos, conciertos, vuelos, productos o cualquier dato que pueda haber cambiado. "
         "Usa kind='news' para noticias y kind='general' para todo lo demás."
     )
     parameters = {

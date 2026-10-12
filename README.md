@@ -7,7 +7,7 @@ Local personal assistant that speaks Spanish. It runs a language model on your o
 ## Requirements
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) with Docker Compose
-- About 6 GB of free disk space for the model
+- About 3 GB of free disk space for the model
 - At least 8 GB of memory assigned to Docker
 
 It was developed on a Mac mini M4 with 16 GB. On macOS, Ollama in Docker runs on the CPU only: Docker does not pass the Metal GPU to containers.
@@ -20,7 +20,7 @@ cd blopa
 cp .env.example .env
 
 docker compose up -d ollama
-docker compose exec ollama ollama pull qwen3:8b
+docker compose exec ollama ollama pull qwen3:4b-instruct
 
 docker compose run --rm blopa
 ```
@@ -44,8 +44,9 @@ All settings live in `.env`.
 |---|---|---|
 | `COMPOSE_PROFILES` | `core` | Docker Compose services to start |
 | `OLLAMA_URL` | `http://ollama:11434` | Ollama address |
-| `BLOPA_MODEL` | `qwen3:8b` | Model to use |
+| `BLOPA_MODEL` | `qwen3:4b-instruct` | Model to use |
 | `BLOPA_NUM_CTX` | `4096` | Context window size |
+| `BLOPA_MAX_TOKENS` | `400` | Max tokens per model response (stops runaway generation) |
 | `BLOPA_THINK` | `false` | Qwen3 internal reasoning (more accurate but slower) |
 | `BLOPA_TIMEZONE` | `America/Monterrey` | User timezone |
 

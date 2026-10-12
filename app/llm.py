@@ -18,7 +18,7 @@ class OllamaClient:
             "messages": messages,
             "stream": False,
             "think": self.settings.think,
-            "options": {"num_ctx": self.settings.num_ctx},
+            "options": {"num_ctx": self.settings.num_ctx, "num_predict": self.settings.max_tokens},
         }
         if tools:
             payload["tools"] = tools

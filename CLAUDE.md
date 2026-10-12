@@ -36,15 +36,15 @@ Local personal assistant in Spanish: converses, searches current information on 
 
 - Everything runs in **Docker Compose** with persistent volumes and must survive a machine restart.
 - Compose profiles: `core`, `voice`, `n8n`, `home`. Optional services stay optional: if a service is not configured, its feature does not appear.
-- Development machine: Mac mini M4, 16 GB. Ollama runs in Docker (ARM64, Metal GPU).
+- Development machine: Mac mini M4, 16 GB. Ollama runs in Docker (ARM64, CPU only: Docker does not pass the Metal GPU to containers).
 - Configuration lives in `.env` (copied from `.env.example`). Only `.env.example` is versioned; `.env` is in `.gitignore`.
 
 ### Stack
 
 | Layer | Technology | Notes |
 |---|---|---|
-| Model runtime | Ollama (Docker, ARM64) | Not exposed outside Docker |
-| Model | Qwen3 8B | Fits in 16 GB unified memory |
+| Model runtime | Ollama (Docker, ARM64, CPU) | Not exposed outside Docker |
+| Model | Qwen3 4B Instruct | ~2.5 GB; leaves room in the Docker VM for other services |
 | Language | Python 3.12 | |
 | API | FastAPI + Uvicorn | |
 | HTTP client | httpx | Always with timeouts |
@@ -62,8 +62,9 @@ Local personal assistant in Spanish: converses, searches current information on 
 | Variable | Example | Description |
 |---|---|---|
 | `OLLAMA_URL` | `http://ollama:11434` | Ollama service address |
-| `BLOPA_MODEL` | `qwen3:8b` | Model to use |
+| `BLOPA_MODEL` | `qwen3:4b-instruct` | Model to use |
 | `BLOPA_NUM_CTX` | `4096` | Context window size |
+| `BLOPA_MAX_TOKENS` | `400` | Max tokens per model response (stops runaway generation) |
 | `BLOPA_THINK` | `false` | Qwen3 internal reasoning (slower) |
 | `BLOPA_TIMEZONE` | `America/Monterrey` | User timezone |
 | `BLOPA_API_TOKEN` | *(empty for dev)* | Protects web and API access |

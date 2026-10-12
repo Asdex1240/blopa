@@ -7,7 +7,7 @@ from app.config import Settings
 from app.errors import LlmFailed, LlmUnavailable, ModelMissing
 from app.llm import OllamaClient
 
-SETTINGS = Settings(ollama_url="http://ollama:11434", model="qwen3:8b", num_ctx=2048)
+SETTINGS = Settings(ollama_url="http://ollama:11434", model="qwen3:4b-instruct", num_ctx=2048, max_tokens=300)
 
 
 def client_returning(handler):
@@ -23,10 +23,10 @@ def test_chat_sends_model_options_and_returns_message():
 
     message = client_returning(handler).chat([{"role": "user", "content": "hola"}])
     assert message["content"] == "Hola"
-    assert sent["model"] == "qwen3:8b"
+    assert sent["model"] == "qwen3:4b-instruct"
     assert sent["stream"] is False
     assert sent["think"] is False
-    assert sent["options"] == {"num_ctx": 2048}
+    assert sent["options"] == {"num_ctx": 2048, "num_predict": 300}
     assert "tools" not in sent
 
 
@@ -40,9 +40,9 @@ def test_connection_error_raises_unavailable():
 
 def test_missing_model_raises_model_missing():
     def handler(request):
-        return httpx.Response(404, json={"error": "model 'qwen3:8b' not found"})
+        return httpx.Response(404, json={"error": "model 'qwen3:4b-instruct' not found"})
 
-    with pytest.raises(ModelMissing, match="ollama pull qwen3:8b"):
+    with pytest.raises(ModelMissing, match="ollama pull qwen3:4b-instruct"):
         client_returning(handler).chat([])
 
 

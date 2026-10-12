@@ -16,8 +16,8 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.
 class ReadPageTool(TruncatesText, Tool):
     name = "read_page"
     description = (
-        "Lee el texto de una página web pública. Úsala cuando los resultados de search_web "
-        "no tengan suficiente detalle; pasa la URL exacta de uno de los resultados."
+        "Lee el texto de una página web pública. Úsala siempre que el usuario comparta una URL, "
+        "o cuando los resultados de search_web no tengan suficiente detalle."
     )
     parameters = {
         "type": "object",

@@ -3,7 +3,7 @@ from app.config import Settings
 
 def test_defaults_when_env_is_empty():
     settings = Settings.from_env({})
-    assert settings.model == "qwen3:8b"
+    assert settings.model == "qwen3:4b-instruct"
     assert settings.think is False
 
 
