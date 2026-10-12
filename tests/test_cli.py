@@ -1,3 +1,4 @@
+from app.agent import Reply
 from app.cli import run
 from app.errors import LlmUnavailable
 
@@ -10,7 +11,7 @@ class FakeAgent:
     def reply(self, text):
         if self.error:
             raise self.error
-        return f"eco {text}"
+        return Reply(f"eco {text}", ["search_web"])
 
     def reset(self):
         self.resets += 1
@@ -25,7 +26,7 @@ def run_with(agent, *lines):
 
 def test_replies_and_exits():
     output = run_with(FakeAgent(), "hola", "/salir")
-    assert output[1].startswith("BLOPA: eco hola")
+    assert output[1].startswith("BLOPA: [search_web] eco hola")
 
 
 def test_reset_command():

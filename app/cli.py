@@ -32,7 +32,8 @@ def answer(agent, text):
         reply = agent.reply(text)
     except BlopaError as error:
         return f"[error] {error}"
-    return f"{reply}  ({time.monotonic() - started:.1f} s)"
+    tools = f"[{', '.join(reply.tools_used)}] " if reply.tools_used else ""
+    return f"{tools}{reply.text}  ({time.monotonic() - started:.1f} s)"
 
 
 if __name__ == "__main__":

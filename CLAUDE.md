@@ -122,12 +122,23 @@ blopa/
 │   ├── agent.py
 │   ├── factory.py
 │   ├── cli.py
+│   ├── errors.py
+│   ├── system_prompt.py
+│   ├── url_guard.py
 │   ├── server.py
 │   ├── voice.py
+│   ├── concerns/
+│   │   ├── conversation_memory.py
+│   │   ├── time_limited.py
+│   │   └── truncates_text.py
+│   ├── search/
+│   │   └── duckduckgo.py
 │   └── tools/
 │       ├── base.py
-│       ├── system.py
-│       ├── web.py
+│       ├── registry.py
+│       ├── date_time.py
+│       ├── search_web.py
+│       ├── read_page.py
 │       ├── home_assistant.py
 │       └── n8n.py
 ├── electron/

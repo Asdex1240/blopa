@@ -2,7 +2,7 @@
 
 Local personal assistant that speaks Spanish. It runs a language model on your own hardware with [Ollama](https://ollama.com) and does not use paid AI services. Everything runs in Docker, so nothing is installed on the host machine.
 
-> **Status:** early development. The conversational core works from the terminal. Web search, the desktop app, home automation, n8n automations and voice are planned.
+> **Status:** early development. Works from the terminal: conversation, current date and time, web search and page reading. The desktop app, home automation, n8n automations and voice are planned.
 
 ## Requirements
 
@@ -65,11 +65,14 @@ docker compose --profile test run --rm --build tests
 app/
 ├── config.py        settings from .env
 ├── llm.py           Ollama client
-├── agent.py         conversation loop
+├── agent.py         conversation and tool loop
 ├── system_prompt.py assistant personality and rules
 ├── errors.py        user-facing errors
+├── url_guard.py     blocks local network addresses
 ├── factory.py       wires the agent together
 ├── cli.py           terminal interface
+├── tools/           date_time, search_web, read_page
+├── search/          search engines (DuckDuckGo)
 └── concerns/        shared mixins
 tests/
 ```

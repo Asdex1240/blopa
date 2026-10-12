@@ -1,5 +1,7 @@
 from app.agent import Agent
 from app.system_prompt import SYSTEM_PROMPT
+from app.tools.base import Tool
+from app.tools.registry import ToolRegistry
 
 
 class FakeLlm:
@@ -8,14 +10,29 @@ class FakeLlm:
         self.calls = []
 
     def chat(self, messages, tools=None):
-        self.calls.append(messages)
-        return {"role": "assistant", "content": self.answers.pop(0)}
+        self.calls.append({"messages": list(messages), "tools": tools})
+        answer = self.answers.pop(0)
+        if isinstance(answer, dict):
+            return {"role": "assistant", "content": "", **answer}
+        return {"role": "assistant", "content": answer}
+
+
+class EchoTool(Tool):
+    name = "echo"
+    description = "Repite el texto."
+
+    def call(self, text):
+        return f"eco: {text}"
+
+
+def tool_call(name, **arguments):
+    return {"tool_calls": [{"function": {"name": name, "arguments": arguments}}]}
 
 
 def test_reply_sends_system_prompt_and_user_message():
     llm = FakeLlm("Hola")
-    assert Agent(llm).reply("hola") == "Hola"
-    assert llm.calls[0] == [
+    assert Agent(llm).reply("hola").text == "Hola"
+    assert llm.calls[0]["messages"] == [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": "hola"},
     ]
@@ -26,7 +43,7 @@ def test_remembers_previous_turns():
     agent = Agent(llm)
     agent.reply("me llamo Juan")
     agent.reply("¿cómo me llamo?")
-    assert [m["content"] for m in llm.calls[1][1:]] == [
+    assert [m["content"] for m in llm.calls[1]["messages"][1:]] == [
         "me llamo Juan",
         "Mucho gusto, Juan",
         "¿cómo me llamo?",
@@ -50,4 +67,38 @@ def test_reset_clears_history():
 
 def test_strips_think_blocks():
     agent = Agent(FakeLlm("<think>razonando</think>\n\nHola"))
-    assert agent.reply("hola") == "Hola"
+    assert agent.reply("hola").text == "Hola"
+
+
+def test_sends_tool_schemas_to_the_model():
+    llm = FakeLlm("ok")
+    Agent(llm, ToolRegistry([EchoTool()])).reply("hola")
+    assert llm.calls[0]["tools"][0]["function"]["name"] == "echo"
+
+
+def test_runs_requested_tool_and_returns_result_to_model():
+    llm = FakeLlm(tool_call("echo", text="hola"), "Listo")
+    reply = Agent(llm, ToolRegistry([EchoTool()])).reply("repite hola")
+    assert reply.text == "Listo"
+    assert reply.tools_used == ["echo"]
+    assert llm.calls[1]["messages"][-1] == {"role": "tool", "tool_name": "echo", "content": "eco: hola"}
+
+
+def test_history_keeps_only_user_and_final_answer():
+    agent = Agent(FakeLlm(tool_call("echo", text="hola"), "Listo"), ToolRegistry([EchoTool()]))
+    agent.reply("repite hola")
+    assert [m["role"] for m in agent.history] == ["user", "assistant"]
+
+
+def test_forces_final_answer_after_max_steps():
+    llm = FakeLlm(*[tool_call("echo", text="otra vez")] * 5, "Me rendí")
+    reply = Agent(llm, ToolRegistry([EchoTool()]), max_steps=5).reply("bucle")
+    assert reply.text == "Me rendí"
+    assert len(reply.tools_used) == 5
+    assert llm.calls[-1]["tools"] is None
+
+
+def test_adds_current_context_to_system_prompt():
+    llm = FakeLlm("ok")
+    Agent(llm, context=lambda: "Hoy es lunes 12 de octubre de 2026").reply("¿qué día es?")
+    assert llm.calls[0]["messages"][0]["content"].endswith("Contexto actual: Hoy es lunes 12 de octubre de 2026")
