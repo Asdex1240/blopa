@@ -49,6 +49,20 @@ docker compose --profile dev up web-dev
 
 Then open **http://localhost:5173**; API calls are proxied to the `blopa` container.
 
+### n8n automations
+
+n8n runs locally with the `n8n` profile (enabled by default in `.env.example`). The editor is only reachable from this machine at **http://localhost:5678**; the first visit asks you to create the local owner account.
+
+Workflows in `n8n/workflows/` can be imported and published from the command line:
+
+```bash
+docker compose exec n8n n8n import:workflow --input=/workflows/blopa-ping.json
+docker compose exec n8n n8n publish:workflow --id=blopaPing0000001
+docker compose restart n8n
+```
+
+BLOPA reaches webhooks through the internal Docker network, e.g. `http://n8n:5678/webhook/blopa-ping`.
+
 ### Terminal
 
 ```bash
@@ -77,7 +91,7 @@ All settings live in `.env`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `COMPOSE_PROFILES` | `core` | Docker Compose services to start |
+| `COMPOSE_PROFILES` | `core,n8n` | Docker Compose services to start |
 | `OLLAMA_URL` | `http://ollama:11434` | Ollama address |
 | `BLOPA_MODEL` | `qwen3:4b-instruct` | Model to use |
 | `BLOPA_NUM_CTX` | `4096` | Context window size |
@@ -118,6 +132,7 @@ app/
 └── concerns/        shared mixins
 web/                 browser interface (Vite + React + Tailwind + shadcn/ui)
 electron/            macOS desktop app
+n8n/workflows/       n8n workflows versioned with the project
 tests/
 ```
 

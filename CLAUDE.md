@@ -90,7 +90,7 @@ src/
 | Page reading | BeautifulSoup | Blocks private addresses |
 | Web UI | Vite + React + TypeScript + Tailwind + shadcn/ui | Built in a Docker stage; FastAPI serves `web/dist` |
 | Desktop app | Electron | Runs on the host; wraps `http://localhost:8000`; microphone via browser APIs |
-| Automations | n8n Community Edition | Profile `n8n`; internal Docker network only |
+| Automations | n8n Community Edition 2.42.7 | Profile `n8n`; webhooks via internal Docker network; editor on `127.0.0.1:5678` only |
 | Home automation | Home Assistant | Profile `home` |
 | Speech to text | faster-whisper | Profile `voice`; `small` model |
 | Text to speech | `say` (macOS) / Piper | `say` for MVP |
@@ -114,7 +114,7 @@ src/
 
 ### Security
 
-- No router ports open. Ollama is not exposed; n8n only on the internal Docker network.
+- No router ports open. Ollama is not exposed; n8n webhooks only on the internal Docker network and its editor only on `127.0.0.1`.
 - Optional `BLOPA_API_TOKEN` protects web and API access.
 - Closed list of actions per device type; sensitive actions always ask for confirmation.
 - `read_page` blocks private and local IPs (router, n8n, Home Assistant).
