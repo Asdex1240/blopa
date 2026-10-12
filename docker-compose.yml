@@ -1,0 +1,35 @@
+name: blopa
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [core]
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+
+  blopa:
+    build:
+      context: .
+      target: base
+    profiles: [core]
+    env_file: .env
+    depends_on:
+      - ollama
+    stdin_open: true
+    tty: true
+
+  tests:
+    build:
+      context: .
+      target: dev
+    profiles: [test]
+    network_mode: none
+    volumes:
+      - ./app:/blopa/app:ro
+      - ./tests:/blopa/tests:ro
+
+volumes:
+  ollama_data:
