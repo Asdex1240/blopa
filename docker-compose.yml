@@ -16,9 +16,12 @@ services:
       context: .
       target: base
     profiles: [core]
+    restart: unless-stopped
     env_file: .env
     depends_on:
       - ollama
+    ports:
+      - "${BLOPA_BIND:-127.0.0.1}:${BLOPA_PORT:-8000}:8000"
     stdin_open: true
     tty: true
 
@@ -32,5 +35,19 @@ services:
       - ./app:/blopa/app:ro
       - ./tests:/blopa/tests:ro
 
+  web-dev:
+    image: node:22-slim
+    profiles: [dev]
+    working_dir: /web
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --port 5173"
+    environment:
+      BLOPA_API_URL: http://blopa:8000
+    volumes:
+      - ./web:/web
+      - web_node_modules:/web/node_modules
+    ports:
+      - "127.0.0.1:5173:5173"
+
 volumes:
   ollama_data:
+  web_node_modules:

@@ -24,6 +24,22 @@ class OllamaClient:
             payload["tools"] = tools
         return self._post("/api/chat", payload)["message"]
 
+    def status(self):
+        try:
+            available = self.http.get("/api/tags", timeout=3.0).json().get("models", [])
+            loaded = self.http.get("/api/ps", timeout=3.0).json().get("models", [])
+        except (httpx.HTTPError, ValueError):
+            return {"reachable": False, "model_available": False, "model_loaded": False}
+        return {
+            "reachable": True,
+            "model_available": any(self._is_model(item) for item in available),
+            "model_loaded": any(self._is_model(item) for item in loaded),
+        }
+
+    def _is_model(self, item):
+        name = item.get("name") or item.get("model", "")
+        return name == self.settings.model or name == f"{self.settings.model}:latest"
+
     def _post(self, path, payload):
         try:
             response = self.http.post(path, json=payload)

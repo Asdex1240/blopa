@@ -1,0 +1,13 @@
+{
+  "name": "blopa-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BLOPA desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "env -u ELECTRON_RUN_AS_NODE electron ."
+  },
+  "devDependencies": {
+    "electron": "44.7.0"
+  }
+}

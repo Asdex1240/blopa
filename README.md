@@ -2,7 +2,7 @@
 
 Local personal assistant that speaks Spanish. It runs a language model on your own hardware with [Ollama](https://ollama.com) and does not use paid AI services. Everything runs in Docker, so nothing is installed on the host machine.
 
-> **Status:** early development. Works from the terminal: conversation, current date and time, web search and page reading. The desktop app, home automation, n8n automations and voice are planned.
+> **Status:** early development. Works from the browser, the macOS desktop app and the terminal: conversation, current date and time, web search and page reading. Home automation, n8n automations and voice are planned.
 
 ## Requirements
 
@@ -22,19 +22,54 @@ cp .env.example .env
 docker compose up -d ollama
 docker compose exec ollama ollama pull qwen3:4b-instruct
 
-docker compose run --rm blopa
+docker compose up -d --build
 ```
 
+Open **http://localhost:8000** in a browser, or from another device on the home network at `http://<your-mac-ip>:8000`.
+
+### Desktop app (macOS)
+
+Requires Node.js. Electron is installed locally inside `electron/`, not globally.
+
+```bash
+cd electron
+npm install
+npm start
 ```
-BLOPA: Hola, ¿en qué te ayudo? (/reset para empezar de nuevo, /salir para terminar)
-Tú: Hola, me llamo Juan
-BLOPA: ¡Hola, Juan! ¿En qué te puedo ayudar?  (2.0 s)
+
+The app connects to `http://localhost:8000`; set `BLOPA_URL` to point it somewhere else. On first launch macOS asks for microphone access.
+
+### Frontend development
+
+The web UI is a Vite + React + Tailwind + shadcn/ui app in `web/`. The production build happens inside Docker. For live reload while editing:
+
+```bash
+docker compose --profile dev up web-dev
+```
+
+Then open **http://localhost:5173**; API calls are proxied to the `blopa` container.
+
+### Terminal
+
+```bash
+docker compose run --rm blopa python -m app.cli
 ```
 
 | Command | Action |
 |---|---|
 | `/reset` | Start a new conversation |
 | `/salir` | Exit |
+
+### HTTP API
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/health` | Model and service status |
+| `GET` | `/chat/messages` | Current conversation |
+| `POST` | `/chat/messages` | Send `{"text": "..."}`; returns the reply and the tools used |
+| `DELETE` | `/chat/messages` | Start a new conversation |
+
+Each client gets its own conversation through a session cookie. When `BLOPA_API_TOKEN` is set, chat routes require `Authorization: Bearer <token>`.
 
 ## Configuration
 
@@ -49,6 +84,9 @@ All settings live in `.env`.
 | `BLOPA_MAX_TOKENS` | `400` | Max tokens per model response (stops runaway generation) |
 | `BLOPA_THINK` | `false` | Qwen3 internal reasoning (more accurate but slower) |
 | `BLOPA_TIMEZONE` | `America/Monterrey` | User timezone |
+| `BLOPA_API_TOKEN` | *(empty)* | Protects the chat API; recommended outside development |
+| `BLOPA_BIND` | `0.0.0.0` | `127.0.0.1` for this machine only, `0.0.0.0` for the home network |
+| `BLOPA_PORT` | `8000` | Web server port |
 
 To use a native Ollama install instead of the container, set `OLLAMA_URL=http://host.docker.internal:11434`.
 
@@ -72,9 +110,14 @@ app/
 ├── url_guard.py     blocks local network addresses
 ├── factory.py       wires the agent together
 ├── cli.py           terminal interface
+├── server.py        HTTP API and web interface
+├── sessions.py      one conversation per client
+├── auth.py          optional access token
 ├── tools/           date_time, search_web, read_page
 ├── search/          search engines (DuckDuckGo)
 └── concerns/        shared mixins
+web/                 browser interface (Vite + React + Tailwind + shadcn/ui)
+electron/            macOS desktop app
 tests/
 ```
 

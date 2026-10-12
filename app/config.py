@@ -12,6 +12,7 @@ class Settings:
     timezone: str = "America/Monterrey"
     history_limit: int = 20
     request_timeout: float = 120.0
+    api_token: str = ""
 
     @classmethod
     def from_env(cls, env=None):
@@ -23,4 +24,5 @@ class Settings:
             max_tokens=int(env.get("BLOPA_MAX_TOKENS", cls.max_tokens)),
             think=env.get("BLOPA_THINK", "false").strip().lower() in ("1", "true", "yes"),
             timezone=env.get("BLOPA_TIMEZONE", cls.timezone),
+            api_token=env.get("BLOPA_API_TOKEN", "").strip(),
         )

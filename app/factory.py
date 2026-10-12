@@ -8,6 +8,10 @@ from app.tools.registry import ToolRegistry
 from app.tools.search_web import SearchWebTool
 
 
+def build_llm(settings):
+    return OllamaClient(settings)
+
+
 def build_registry(settings):
     return ToolRegistry([
         DateTimeTool(settings.timezone),
@@ -16,10 +20,10 @@ def build_registry(settings):
     ])
 
 
-def build_agent(settings=None):
+def build_agent(settings=None, llm=None):
     settings = settings or Settings.from_env()
     return Agent(
-        OllamaClient(settings),
+        llm or build_llm(settings),
         build_registry(settings),
         history_limit=settings.history_limit,
         context=DateTimeTool(settings.timezone).call,
