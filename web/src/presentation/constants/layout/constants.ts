@@ -18,4 +18,4 @@ export const SERVICE_DOT: Record<ServiceState, string> = {
   off: "bg-muted-foreground/40",
 }
 
-export const SERVICE_LABELS = ["Modelo", "Ollama", "n8n", "Home Assistant"]
+export const SERVICE_LABELS = ["Modelo", "Ollama", "n8n", "Home Assistant", "Voz"]

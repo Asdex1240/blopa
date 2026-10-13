@@ -7,6 +7,9 @@ export type ChatMessage = {
   tools?: string[]
   elapsed?: number
   confirmation?: string | null
+  fromVoice?: boolean
 }
 
-export type MicrophoneState = "unknown" | "ready" | "denied"
+export type RecorderState = "idle" | "recording" | "transcribing"
+
+export type SendOptions = { fromVoice?: boolean }

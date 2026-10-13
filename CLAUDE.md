@@ -94,8 +94,8 @@ src/
 | Desktop app | Electron | Runs on the host; wraps `http://localhost:8000`; microphone via browser APIs |
 | Automations | n8n Community Edition 2.42.7 | Profile `n8n`; webhooks via internal Docker network; editor on `127.0.0.1:5678` only |
 | Home automation | Home Assistant 2026.10.1 | Profile `home`; UI on `127.0.0.1:8123` only; Matter (local) and Tuya (cloud) integrations |
-| Speech to text | faster-whisper | Profile `voice`; `small` model |
-| Text to speech | `say` (macOS) / Piper | `say` for MVP |
+| Speech to text | faster-whisper 1.2.1 (`voice/`, PyAV 18.1.0) | Profile `voice`; `small` model; internal only |
+| Text to speech | System voices via `speechSynthesis` in the app | Same voices as `say` (Paulina es-MX); `say` cannot run from Docker |
 | Testing | pytest | Mock model |
 
 ### Environment variables
@@ -116,6 +116,7 @@ src/
 | `HA_URL` / `HA_TOKEN` | *(empty)* | Home Assistant URL and token |
 | `MATTER_URL` | `ws://host.docker.internal:5580/ws` | Matter server; enables "Agregar dispositivo" |
 | `BLOPA_WHISPER_MODEL` | `small` | Transcription model |
+| `WHISPER_URL` | `http://whisper:9000` | Speech-to-text service; empty hides the microphone |
 
 ### Security
 
@@ -184,7 +185,8 @@ blopa/
 │   │   ├── chat.py
 │   │   ├── automations.py
 │   │   ├── devices.py
-│   │   └── accounts.py
+│   │   ├── accounts.py
+│   │   └── voice.py
 │   ├── automations/
 │   │   ├── models.py
 │   │   ├── repository.py
@@ -196,7 +198,8 @@ blopa/
 │   │   ├── devices.py
 │   │   ├── matter.py
 │   │   └── tuya.py
-│   ├── voice.py
+│   ├── voice/
+│   │   └── transcription.py
 │   ├── concerns/
 │   │   ├── conversation_memory.py
 │   │   ├── mentions_home.py
@@ -214,6 +217,7 @@ blopa/
 │       └── home.py
 ├── web/                 Vite + React app (see React rules)
 ├── matter/              Matter server (host, npm)
+├── voice/               Whisper service (own Dockerfile)
 ├── electron/
 │   ├── package.json
 │   ├── main.js

@@ -10,7 +10,8 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 export default function App() {
-  const { view, setView, health, online, refresh, authVersion, handleUnauthorized, handleTokenSaved } = useAppShell()
+  const { view, setView, health, online, refresh, authVersion, speech, voiceReady, handleUnauthorized, handleTokenSaved } =
+    useAppShell()
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -19,7 +20,14 @@ export default function App() {
         <MobileHeader view={view} onSelect={setView} health={health} online={online} />
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-4">
           <section className={cn("min-h-0 flex-1 flex-col", view === "chat" ? "flex" : "hidden")}>
-            <ChatPage authVersion={authVersion} onUnauthorized={handleUnauthorized} onReplied={refresh} />
+            <ChatPage
+              authVersion={authVersion}
+              voiceEnabled={voiceReady}
+              speakAll={speech.speakAll}
+              onSpeak={speech.speak}
+              onUnauthorized={handleUnauthorized}
+              onReplied={refresh}
+            />
           </section>
           {view === "devices" && (
             <DevicesPage
@@ -31,7 +39,15 @@ export default function App() {
           {view === "automations" && (
             <AutomationsPage n8nConfigured={health?.services.n8n.configured ?? false} onUnauthorized={handleUnauthorized} />
           )}
-          {view === "settings" && <SettingsPage health={health} onTokenSaved={handleTokenSaved} />}
+          {view === "settings" && (
+            <SettingsPage
+              health={health}
+              speakAll={speech.speakAll}
+              onSpeakAllChange={speech.setSpeakAll}
+              onTestVoice={() => speech.speak("Hola, soy BLOPA. Así sueno cuando te respondo.")}
+              onTokenSaved={handleTokenSaved}
+            />
+          )}
         </main>
       </div>
       <Toaster position="top-center" />

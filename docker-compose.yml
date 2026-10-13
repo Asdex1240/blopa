@@ -58,6 +58,17 @@ services:
     ports:
       - "127.0.0.1:8123:8123"
 
+  whisper:
+    build:
+      context: ./voice
+    profiles: [voice]
+    restart: unless-stopped
+    environment:
+      WHISPER_MODEL: ${BLOPA_WHISPER_MODEL:-small}
+      WHISPER_COMPUTE_TYPE: int8
+    volumes:
+      - whisper_models:/models
+
   tests:
     build:
       context: .
@@ -86,4 +97,5 @@ volumes:
   ollama_data:
   n8n_data:
   ha_config:
+  whisper_models:
   web_node_modules:

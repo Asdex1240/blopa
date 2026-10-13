@@ -17,6 +17,7 @@ class Settings:
     ha_url: str = ""
     ha_token: str = ""
     matter_url: str = ""
+    whisper_url: str = ""
     data_dir: str = "/data"
 
     @classmethod
@@ -34,5 +35,6 @@ class Settings:
             ha_url=env.get("HA_URL", "").strip().rstrip("/"),
             ha_token=env.get("HA_TOKEN", "").strip(),
             matter_url=env.get("MATTER_URL", "").strip(),
+            whisper_url=env.get("WHISPER_URL", "").strip().rstrip("/"),
             data_dir=env.get("BLOPA_DATA_DIR", cls.data_dir),
         )

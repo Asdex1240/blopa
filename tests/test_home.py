@@ -211,3 +211,23 @@ def test_waits_for_slow_cloud_devices_to_report_the_change():
     before = directory.get("light.foco")
     assert directory.settled("light.foco", before=before).state == "off"
     assert naps == [0.5]
+
+
+def test_spoken_kind_picks_the_only_device_of_that_kind():
+    class Client:
+        def states(self):
+            return [
+                {"entity_id": "light.shome_120", "state": "on", "attributes": {"friendly_name": "Luces"}},
+                {"entity_id": "switch.cafetera", "state": "off", "attributes": {"friendly_name": "Cafetera"}},
+            ]
+
+    directory = DeviceDirectory(Client())
+    assert directory.find("el foco Steren").entity_id == "light.shome_120"
+    assert directory.find("Focos Teren").entity_id == "light.shome_120"
+    assert directory.find("el contacto").entity_id == "switch.cafetera"
+
+
+def test_spoken_kind_is_ambiguous_with_several_devices(home):
+    directory, _ = home
+    with pytest.raises(DeviceNotFound):
+        directory.find("el foco")

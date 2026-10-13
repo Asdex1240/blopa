@@ -8,13 +8,23 @@ from app.config import Settings
 from app.errors import BlopaError
 from app.factory import build_agent, build_automations, build_home, build_llm, build_matter
 from app.home.tuya import TuyaAccounts
-from app.routes import accounts, automations, chat, devices, health
+from app.routes import accounts, automations, chat, devices, health, voice
+from app.voice.transcription import TranscriptionClient
 from app.sessions import SessionStore
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web" / "dist"
 
 
-def create_app(settings=None, agent_factory=None, llm=None, web_dir=WEB_DIR, n8n_transport=None, ha_transport=None, matter=None):
+def create_app(
+    settings=None,
+    agent_factory=None,
+    llm=None,
+    web_dir=WEB_DIR,
+    n8n_transport=None,
+    ha_transport=None,
+    matter=None,
+    voice_transport=None,
+):
     settings = settings or Settings.from_env()
     llm = llm or build_llm(settings)
     repository, runner = build_automations(settings, transport=n8n_transport)
@@ -29,6 +39,7 @@ def create_app(settings=None, agent_factory=None, llm=None, web_dir=WEB_DIR, n8n
     app.state.home = home
     app.state.matter = matter or build_matter(settings)
     app.state.tuya = TuyaAccounts(home.client) if home else None
+    app.state.voice = TranscriptionClient(settings.whisper_url, transport=voice_transport) if settings.whisper_url else None
     app.state.sessions = SessionStore(agent_factory)
     app.state.tools = agent_factory().registry.names()
 
@@ -41,6 +52,7 @@ def create_app(settings=None, agent_factory=None, llm=None, web_dir=WEB_DIR, n8n
     app.include_router(automations.router)
     app.include_router(devices.router)
     app.include_router(accounts.router)
+    app.include_router(voice.router)
 
     if Path(web_dir).is_dir():
         app.mount("/", StaticFiles(directory=web_dir, html=True), name="web")

@@ -2,15 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import { api, ApiError } from "@/lib/api"
 import { CANCEL_TEXT, CONFIRM_TEXT, GREETING } from "@/presentation/constants/chat/constants"
-import type { ChatMessage } from "@/presentation/types/chat/types"
+import type { ChatMessage, SendOptions } from "@/presentation/types/chat/types"
 
 type Options = {
   authVersion: number
+  speakAll: boolean
+  onSpeak: (text: string) => void
   onUnauthorized: () => void
   onReplied: () => void
 }
 
-export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options) {
+export function useChatPage({ authVersion, speakAll, onSpeak, onUnauthorized, onReplied }: Options) {
   const nextId = useRef(0)
   const endRef = useRef<HTMLDivElement>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -46,8 +48,8 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
   }, [build, greet, onUnauthorized])
 
   const handleSend = useCallback(
-    async (text: string) => {
-      setMessages((current) => [...current, build({ role: "user", text })])
+    async (text: string, options: SendOptions = {}) => {
+      setMessages((current) => [...current, build({ role: "user", text, fromVoice: options.fromVoice })])
       setConfirmation(null)
       setBusy(true)
       try {
@@ -57,6 +59,7 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
           build({ role: "assistant", text: reply.text || "(sin respuesta)", tools: reply.tools_used, elapsed: reply.elapsed }),
         ])
         setConfirmation(reply.confirmation)
+        if (options.fromVoice || speakAll) onSpeak(reply.text)
       } catch (error) {
         handleError(error)
       } finally {
@@ -64,8 +67,10 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
         onReplied()
       }
     },
-    [build, handleError, onReplied],
+    [build, handleError, onReplied, onSpeak, speakAll],
   )
+
+  const handleVoiceText = useCallback((text: string) => handleSend(text, { fromVoice: true }), [handleSend])
 
   const handleReset = useCallback(async () => {
     try {
@@ -89,5 +94,5 @@ export function useChatPage({ authVersion, onUnauthorized, onReplied }: Options)
 
   const handleCancel = useCallback(() => handleSend(CANCEL_TEXT), [handleSend])
 
-  return { messages, busy, confirmation, endRef, handleSend, handleReset, handleConfirm, handleCancel }
+  return { messages, busy, confirmation, endRef, handleSend, handleVoiceText, handleReset, handleConfirm, handleCancel }
 }

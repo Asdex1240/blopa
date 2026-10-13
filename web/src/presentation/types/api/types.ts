@@ -19,5 +19,8 @@ export type Health = {
     n8n: { configured: boolean; reachable: boolean }
     home_assistant: { configured: boolean; reachable: boolean }
     matter: { configured: boolean; reachable: boolean }
+    voice: { configured: boolean; reachable: boolean; ready: boolean; model: string | null }
   }
 }
+
+export type Transcription = { text: string; language: string; duration: number; elapsed: number; model: string }

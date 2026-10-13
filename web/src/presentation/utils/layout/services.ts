@@ -25,6 +25,14 @@ function homeAssistantService(home: Health["services"]["home_assistant"]): Servi
     : { label: "Home Assistant", state: "error", detail: "Configurado, pero no responde" }
 }
 
+function voiceService(voice: Health["services"]["voice"]): Service {
+  if (!voice?.configured) return { label: "Voz", state: "off", detail: "No configurado" }
+  if (!voice.reachable) return { label: "Voz", state: "error", detail: "Configurado, pero no responde" }
+  return voice.ready
+    ? { label: "Voz", state: "ok", detail: `Reconocimiento listo (${voice.model})` }
+    : { label: "Voz", state: "warn", detail: `Cargando modelo ${voice.model}` }
+}
+
 export function buildServices(health: Health | null, online: boolean): Service[] {
   if (!online || !health) {
     return SERVICE_LABELS.map((label) => ({ label, state: "error", detail: "Sin conexión con el servidor" }))
@@ -35,5 +43,6 @@ export function buildServices(health: Health | null, online: boolean): Service[]
     { label: "Ollama", state: ollama.reachable ? "ok" : "error", detail: ollama.reachable ? "Conectado" : "Sin conexión" },
     n8nService(n8n),
     homeAssistantService(home_assistant),
+    voiceService(health.services.voice),
   ]
 }

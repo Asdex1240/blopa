@@ -7,6 +7,14 @@ from app.home.client import HomeAssistantError
 from app.home.catalog import ACTIONS, DOMAIN_LABELS, STATE_LABELS, VALUE_RANGES, actions_for, is_sensitive
 
 TRANSITIONAL_STATES = {"locking", "unlocking", "opening", "closing"}
+KIND_WORDS = {
+    "light": {"luz", "luces", "foco", "focos", "lampara", "lamparas"},
+    "switch": {"enchufe", "enchufes", "contacto", "contactos"},
+    "fan": {"ventilador", "ventiladores"},
+    "lock": {"cerradura", "cerraduras", "chapa"},
+    "cover": {"persiana", "persianas", "cortina", "cortinas", "cochera"},
+    "climate": {"aire", "clima", "termostato"},
+}
 KEY_ATTRIBUTES = ("brightness", "current_temperature", "temperature", "current_position", "hvac_modes")
 FILLER_WORDS = {"el", "la", "los", "las", "de", "del", "mi", "un", "una"}
 
@@ -115,6 +123,9 @@ class DeviceDirectory:
         close = difflib.get_close_matches(wanted, names, n=3, cutoff=0.6)
         if len(close) == 1 or (close and len(containing) > 1):
             return names[close[0]]
+        only = self._only_device_of_spoken_kind(query, devices)
+        if only:
+            return only
         candidates = ", ".join(f"«{device.name}»" for device in (containing or devices)[:8])
         raise DeviceNotFound(f"No encontré un dispositivo llamado «{query}». Opciones: {candidates}.")
 
@@ -127,6 +138,14 @@ class DeviceDirectory:
                 raise InvalidAction("Este dispositivo no permite cambiarle el nombre desde BLOPA.")
             raise
         return self.get(entity_id)
+
+    def _only_device_of_spoken_kind(self, query, devices):
+        words = set(normalize(query).split())
+        domains = [domain for domain, kind_words in KIND_WORDS.items() if words & kind_words]
+        if len(domains) != 1:
+            return None
+        matching = [device for device in devices if device.domain == domains[0]]
+        return matching[0] if len(matching) == 1 else None
 
     def control(self, device, action, value=None):
         definition = ACTIONS[device.domain].get(action)

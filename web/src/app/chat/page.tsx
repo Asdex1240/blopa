@@ -8,16 +8,16 @@ import { Button } from "@/components/ui/button"
 
 type Props = {
   authVersion: number
+  voiceEnabled: boolean
+  speakAll: boolean
+  onSpeak: (text: string) => void
   onUnauthorized: () => void
   onReplied: () => void
 }
 
-export default function ChatPage({ authVersion, onUnauthorized, onReplied }: Props) {
-  const { messages, busy, confirmation, endRef, handleSend, handleReset, handleConfirm, handleCancel } = useChatPage({
-    authVersion,
-    onUnauthorized,
-    onReplied,
-  })
+export default function ChatPage({ authVersion, voiceEnabled, speakAll, onSpeak, onUnauthorized, onReplied }: Props) {
+  const { messages, busy, confirmation, endRef, handleSend, handleVoiceText, handleReset, handleConfirm, handleCancel } =
+    useChatPage({ authVersion, speakAll, onSpeak, onUnauthorized, onReplied })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 pb-6">
@@ -35,7 +35,7 @@ export default function ChatPage({ authVersion, onUnauthorized, onReplied }: Pro
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />
-      <ChatComposer busy={busy} onSend={handleSend} />
+      <ChatComposer busy={busy} voiceEnabled={voiceEnabled} onSend={handleSend} onVoiceText={handleVoiceText} />
     </div>
   )
 }

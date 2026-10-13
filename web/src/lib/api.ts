@@ -1,5 +1,5 @@
 import { storage } from "@/lib/storage"
-import type { Health, History, Reply } from "@/presentation/types/api/types"
+import type { Health, History, Reply, Transcription } from "@/presentation/types/api/types"
 import type { Automation, AutomationInput, AutomationRun } from "@/presentation/types/automations/types"
 import type { Account, Device, DiscoveredDevice, TuyaConfirmation, TuyaLink } from "@/presentation/types/devices/types"
 
@@ -21,7 +21,8 @@ const describe = (detail: unknown) => {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  const form = body instanceof FormData
+  const headers: Record<string, string> = form ? {} : { "Content-Type": "application/json" }
   const token = storage.get(TOKEN_KEY)
   if (token) headers.Authorization = `Bearer ${token}`
   let response: Response
@@ -29,7 +30,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     response = await fetch(path, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : form ? body : JSON.stringify(body),
       credentials: "same-origin",
     })
   } catch {
@@ -62,5 +63,10 @@ export const api = {
   confirmTuyaLink: (linkId: string) => request<TuyaConfirmation>("POST", `/accounts/tuya/links/${linkId}/confirmations`),
   cancelTuyaLink: (linkId: string) => request<void>("DELETE", `/accounts/tuya/links/${linkId}`),
   refreshTuya: () => request<{ refreshing: boolean }>("POST", "/accounts/tuya/refreshes"),
+  transcribe: (audio: Blob) => {
+    const form = new FormData()
+    form.append("audio", audio, audio.type.includes("mp4") ? "voz.mp4" : "voz.webm")
+    return request<Transcription>("POST", "/voice/transcriptions", form)
+  },
   listRuns: (limit = 20) => request<{ runs: AutomationRun[] }>("GET", `/automation-runs?limit=${limit}`),
 }
