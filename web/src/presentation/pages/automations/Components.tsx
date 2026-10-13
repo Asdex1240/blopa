@@ -5,10 +5,6 @@ import { formatDate } from "@/presentation/utils/automations/formatDate"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function FieldError({ message }: { message?: string }) {
-  return message ? <p className="text-xs text-destructive">{message}</p> : null
-}
-
 export function RunStatusBadge({ run }: { run: AutomationRun }) {
   return run.ok ? (
     <Badge variant="secondary" className="gap-1 text-success">

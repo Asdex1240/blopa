@@ -14,6 +14,9 @@ class Settings:
     request_timeout: float = 120.0
     api_token: str = ""
     n8n_url: str = ""
+    ha_url: str = ""
+    ha_token: str = ""
+    matter_url: str = ""
     data_dir: str = "/data"
 
     @classmethod
@@ -28,5 +31,8 @@ class Settings:
             timezone=env.get("BLOPA_TIMEZONE", cls.timezone),
             api_token=env.get("BLOPA_API_TOKEN", "").strip(),
             n8n_url=env.get("N8N_URL", "").strip().rstrip("/"),
+            ha_url=env.get("HA_URL", "").strip().rstrip("/"),
+            ha_token=env.get("HA_TOKEN", "").strip(),
+            matter_url=env.get("MATTER_URL", "").strip(),
             data_dir=env.get("BLOPA_DATA_DIR", cls.data_dir),
         )

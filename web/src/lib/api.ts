@@ -1,6 +1,7 @@
 import { storage } from "@/lib/storage"
 import type { Health, History, Reply } from "@/presentation/types/api/types"
 import type { Automation, AutomationInput, AutomationRun } from "@/presentation/types/automations/types"
+import type { Account, Device, DiscoveredDevice, TuyaConfirmation, TuyaLink } from "@/presentation/types/devices/types"
 
 export const TOKEN_KEY = "blopa_token"
 
@@ -50,5 +51,16 @@ export const api = {
   updateAutomation: (id: number, input: Partial<AutomationInput>) => request<Automation>("PATCH", `/automations/${id}`, input),
   deleteAutomation: (id: number) => request<void>("DELETE", `/automations/${id}`),
   createRun: (id: number, text = "") => request<AutomationRun>("POST", `/automations/${id}/runs`, { text }),
+  listDevices: () => request<{ devices: Device[] }>("GET", "/devices"),
+  createDeviceAction: (entityId: string, action: string, value?: number) =>
+    request<{ accepted: boolean }>("POST", `/devices/${entityId}/actions`, { action, value }),
+  listDiscovered: () => request<{ devices: DiscoveredDevice[] }>("GET", "/devices/discovered"),
+  createPairing: (code: string) => request<{ paired: boolean }>("POST", "/devices/pairings", { code }),
+  renameDevice: (entityId: string, name: string) => request<Device>("PATCH", `/devices/${entityId}`, { name }),
+  listAccounts: () => request<{ accounts: Account[] }>("GET", "/accounts"),
+  createTuyaLink: (userCode: string) => request<TuyaLink>("POST", "/accounts/tuya/links", { user_code: userCode }),
+  confirmTuyaLink: (linkId: string) => request<TuyaConfirmation>("POST", `/accounts/tuya/links/${linkId}/confirmations`),
+  cancelTuyaLink: (linkId: string) => request<void>("DELETE", `/accounts/tuya/links/${linkId}`),
+  refreshTuya: () => request<{ refreshing: boolean }>("POST", "/accounts/tuya/refreshes"),
   listRuns: (limit = 20) => request<{ runs: AutomationRun[] }>("GET", `/automation-runs?limit=${limit}`),
 }

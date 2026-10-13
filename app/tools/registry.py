@@ -5,6 +5,9 @@ class ToolRegistry:
     def schemas(self):
         return [tool.schema() for tool in self.tools.values() if tool.available()]
 
+    def required_for(self, text):
+        return [tool.name for tool in self.tools.values() if tool.available() and tool.required_for(text)]
+
     def names(self):
         return [tool.name for tool in self.tools.values()]
 

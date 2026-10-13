@@ -1,0 +1,12 @@
+default_config:
+
+homeassistant:
+  name: Casa
+  country: MX
+  language: es
+  currency: MXN
+  unit_system: metric
+  time_zone: America/Monterrey
+  latitude: 25.6844
+  longitude: -100.3172
+  elevation: 540

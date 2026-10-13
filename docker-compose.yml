@@ -46,6 +46,18 @@ services:
     ports:
       - "127.0.0.1:5678:5678"
 
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:2026.10.1
+    profiles: [home]
+    restart: unless-stopped
+    environment:
+      TZ: ${BLOPA_TIMEZONE:-America/Monterrey}
+    volumes:
+      - ha_config:/config
+      - ./homeassistant/configuration.yaml:/config/configuration.yaml:ro
+    ports:
+      - "127.0.0.1:8123:8123"
+
   tests:
     build:
       context: .
@@ -73,4 +85,5 @@ volumes:
   blopa_data:
   ollama_data:
   n8n_data:
+  ha_config:
   web_node_modules:

@@ -16,6 +16,7 @@ def health(request: Request):
         "services": {
             "ollama": state.llm.status(),
             "n8n": state.runner.status() if state.runner else {"configured": False, "reachable": False},
-            "home_assistant": {"configured": False},
+            "home_assistant": state.home.client.status() if state.home else {"configured": False, "reachable": False},
+            "matter": state.matter.status() if state.matter else {"configured": False, "reachable": False},
         },
     }

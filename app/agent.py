@@ -9,6 +9,10 @@ from app.tools.registry import ToolRegistry
 THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL)
 MAX_STEPS = 5
 CANCELLED = "Listo, no lo hice."
+REQUIRED_TOOLS_NUDGE = (
+    "La última petición necesita datos o acciones reales: llama a {tools} antes de responder. "
+    "No respondas de memoria ni digas que hiciste algo sin llamar la herramienta."
+)
 
 
 @dataclass
@@ -35,16 +39,21 @@ class Agent(ConversationMemory):
         self.remember("user", text)
         if self.pending:
             return self._resolve(text)
-        return self._run(self._messages(), [], self.max_steps)
+        return self._run(self._messages(), [], self.max_steps, text)
 
     def reset(self):
         self.forget()
         self.pending = None
 
-    def _run(self, messages, tools_used, steps):
+    def _run(self, messages, tools_used, steps, text=None):
+        required = self.registry.required_for(text) if text else []
         for step in range(steps):
             message = self.llm.chat(messages, tools=self.registry.schemas())
             calls = message.get("tool_calls") or []
+            if not calls and required and not set(required) & set(tools_used):
+                messages.append({"role": "system", "content": REQUIRED_TOOLS_NUDGE.format(tools=", ".join(required))})
+                required = []
+                continue
             if not calls:
                 return self._finish(message, tools_used)
             messages.append(message)
@@ -80,7 +89,7 @@ class Agent(ConversationMemory):
         if answer == "no":
             self.remember("assistant", CANCELLED)
             return Reply(CANCELLED)
-        return self._run(self._messages(), [], self.max_steps)
+        return self._run(self._messages(), [], self.max_steps, text)
 
     def _finish(self, message, tools_used):
         text = THINK_BLOCK.sub("", message.get("content", "")).strip()

@@ -21,7 +21,13 @@ export default function App() {
           <section className={cn("min-h-0 flex-1 flex-col", view === "chat" ? "flex" : "hidden")}>
             <ChatPage authVersion={authVersion} onUnauthorized={handleUnauthorized} onReplied={refresh} />
           </section>
-          {view === "devices" && <DevicesPage />}
+          {view === "devices" && (
+            <DevicesPage
+              homeConfigured={health?.services.home_assistant.configured ?? false}
+              matterConfigured={health?.services.matter.configured ?? false}
+              onUnauthorized={handleUnauthorized}
+            />
+          )}
           {view === "automations" && (
             <AutomationsPage n8nConfigured={health?.services.n8n.configured ?? false} onUnauthorized={handleUnauthorized} />
           )}

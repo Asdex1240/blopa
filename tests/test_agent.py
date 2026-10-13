@@ -102,3 +102,41 @@ def test_adds_current_context_to_system_prompt():
     llm = FakeLlm("ok")
     Agent(llm, context=lambda: "Hoy es lunes 12 de octubre de 2026").reply("¿qué día es?")
     assert llm.calls[0]["messages"][0]["content"].endswith("Contexto actual: Hoy es lunes 12 de octubre de 2026")
+
+
+class HouseTool(EchoTool):
+    name = "house"
+
+    def required_for(self, text):
+        return "luz" in text
+
+
+def test_nudges_once_when_a_required_tool_was_skipped():
+    llm = FakeLlm("Ya está apagada.", tool_call("house", text="sala"), "Apagada de verdad.")
+    reply = Agent(llm, ToolRegistry([HouseTool()])).reply("apaga la luz")
+    assert reply.text == "Apagada de verdad."
+    assert reply.tools_used == ["house"]
+    assert "llama a house" in llm.calls[1]["messages"][-1]["content"]
+
+
+def test_nudge_happens_only_once():
+    llm = FakeLlm("No sé.", "Sigo sin saber.")
+    reply = Agent(llm, ToolRegistry([HouseTool()])).reply("apaga la luz")
+    assert reply.text == "Sigo sin saber."
+    assert len(llm.calls) == 2
+
+
+def test_no_nudge_for_unrelated_messages():
+    llm = FakeLlm("Hola")
+    Agent(llm, ToolRegistry([HouseTool()])).reply("hola")
+    assert len(llm.calls) == 1
+
+
+def test_nudges_when_the_wrong_tool_was_used():
+    class Lister(EchoTool):
+        name = "lister"
+
+    llm = FakeLlm(tool_call("lister", text="x"), "Solo listé.", tool_call("house", text="sala"), "Ahora sí.")
+    reply = Agent(llm, ToolRegistry([HouseTool(), Lister()])).reply("apaga la luz")
+    assert reply.text == "Ahora sí."
+    assert reply.tools_used == ["lister", "house"]

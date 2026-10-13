@@ -17,6 +17,7 @@ export type Health = {
   services: {
     ollama: OllamaStatus
     n8n: { configured: boolean; reachable: boolean }
-    home_assistant: { configured: boolean }
+    home_assistant: { configured: boolean; reachable: boolean }
+    matter: { configured: boolean; reachable: boolean }
   }
 }

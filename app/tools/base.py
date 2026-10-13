@@ -12,6 +12,9 @@ class Tool:
     def confirmation_for(self, **arguments):
         return None
 
+    def required_for(self, text):
+        return False
+
     def schema(self):
         return {
             "type": "function",

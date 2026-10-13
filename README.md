@@ -70,6 +70,38 @@ BLOPA reaches webhooks through the internal Docker network, e.g. `http://n8n:567
 
 To let BLOPA launch a workflow, register it in **Automatizaciones** with a name, a description (BLOPA reads it to decide when to use it) and the webhook path. Automations ask for confirmation by default: BLOPA describes the action and waits for "sí" / "no", or the "Sí, hazlo" / "No" buttons. Every run, from chat or panel, is recorded in the history.
 
+### Home Assistant
+
+Home Assistant runs with the `home` profile. Its UI is only reachable from this machine at **http://localhost:8123**. To try BLOPA without real hardware, add `demo:` to `homeassistant/configuration.yaml`: it creates virtual lights, plugs, locks, covers and an AC.
+
+1. Open http://localhost:8123 and create the owner account.
+2. Profile → Security → **Long-lived access tokens** → create one for BLOPA.
+3. Put it in `.env` as `HA_TOKEN` (with `HA_URL=http://homeassistant:8123`) and run `docker compose up -d blopa`.
+
+#### Matter devices (macOS)
+
+The Matter server runs on the Mac, outside Docker, because Docker Desktop cannot give containers the local network access Matter needs.
+
+```bash
+cd matter
+npm install
+npm start
+```
+
+macOS asks once for **Local Network** permission; allow it. Then, in Home Assistant, the Matter integration points to `ws://host.docker.internal:5580/ws`.
+
+To add a device that already works in another app (Alexa, Google Home, the maker's app): generate a sharing code there, then in BLOPA → **Dispositivos → Agregar** paste the 11-digit code. The device keeps working in the original app. The code printed on the box only works for the very first setup.
+
+#### Adding devices
+
+In **Dispositivos → Agregar**, BLOPA asks which app you use today and guides you: connecting a Smart Life account (user code + QR shown in BLOPA), moving a device from a white-label app such as Steren Home, or pairing a Matter device with a share code from Alexa or Google Home. At the end it asks how you call each device; rename any device later with the pencil.
+
+#### Tuya / Smart Life devices (cloud)
+
+Many generic Wi-Fi devices (Steren, and other brands built on Tuya) can be added through Home Assistant's official **Tuya** integration. It only accepts accounts from the **Smart Life** or **Tuya Smart** apps, not white-label apps like Steren Home, so move the device to Smart Life first. Then in Home Assistant add the Tuya integration with your Smart Life *user code* (Me → Settings → Account and Security) and scan the QR with Smart Life. These devices depend on internet and the Tuya cloud.
+
+Lights, plugs and fans are controlled directly. Locks, covers, climate, scripts and automations always ask for confirmation, in chat and in the **Dispositivos** panel.
+
 ### Terminal
 
 ```bash
@@ -93,6 +125,15 @@ docker compose run --rm blopa python -m app.cli
 | `PATCH` / `DELETE` | `/automations/{id}` | Edit or remove an automation |
 | `GET` / `POST` | `/automations/{id}/runs` | History of one automation, or run it now |
 | `GET` | `/automation-runs` | Latest runs of all automations |
+| `GET` | `/devices` | Home Assistant devices BLOPA can control, with state |
+| `POST` | `/devices/{entity_id}/actions` | Run an allowed action, e.g. `{"action": "encender"}` |
+| `GET` | `/devices/discovered` | Matter devices waiting to be paired |
+| `POST` | `/devices/pairings` | Pair a Matter device with a sharing code `{"code": "..."}` |
+| `PATCH` | `/devices/{entity_id}` | Rename a device `{"name": "Luz del cuarto"}` |
+| `GET` | `/accounts` | Linked accounts (Smart Life / Tuya) |
+| `POST` | `/accounts/tuya/links` | Start linking Smart Life with a user code; returns the QR |
+| `POST` | `/accounts/tuya/links/{id}/confirmations` | Finish after scanning; returns a new QR if not scanned yet |
+| `POST` | `/accounts/tuya/refreshes` | Look for new devices in the linked account |
 
 Each client gets its own conversation through a session cookie. When `BLOPA_API_TOKEN` is set, chat routes require `Authorization: Bearer <token>`.
 
@@ -102,7 +143,7 @@ All settings live in `.env`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `COMPOSE_PROFILES` | `core,n8n` | Docker Compose services to start |
+| `COMPOSE_PROFILES` | `core,n8n,home` | Docker Compose services to start |
 | `OLLAMA_URL` | `http://ollama:11434` | Ollama address |
 | `BLOPA_MODEL` | `qwen3:4b-instruct` | Model to use |
 | `BLOPA_NUM_CTX` | `4096` | Context window size |
@@ -114,6 +155,8 @@ All settings live in `.env`.
 | `BLOPA_PORT` | `8000` | Web server port |
 | `BLOPA_DATA_DIR` | `/data` | SQLite location inside the container (volume `blopa_data`) |
 | `N8N_URL` | `http://n8n:5678` | n8n base URL; empty disables automations |
+| `HA_URL` / `HA_TOKEN` | `http://homeassistant:8123` / *(empty)* | Home Assistant URL and long-lived token; empty disables home control |
+| `MATTER_URL` | `ws://host.docker.internal:5580/ws` | Matter server; enables adding Matter devices from the panel |
 
 To use a native Ollama install instead of the container, set `OLLAMA_URL=http://host.docker.internal:11434`.
 
@@ -144,12 +187,15 @@ app/
 ├── confirmation.py  yes / no detection for sensitive actions
 ├── routes/          health, chat and automations endpoints
 ├── automations/     repository and n8n webhook runner
-├── tools/           date_time, search_web, read_page, run_automation
+├── home/            Home Assistant client, action catalog, device lookup
+├── tools/           date_time, search_web, read_page, run_automation, home_*
 ├── search/          search engines (DuckDuckGo)
 └── concerns/        shared mixins
 web/                 browser interface (Vite + React + Tailwind + shadcn/ui)
 electron/            macOS desktop app
 n8n/workflows/       n8n workflows versioned with the project
+homeassistant/       Home Assistant configuration
+matter/              Matter server (runs on the host)
 tests/
 ```
 

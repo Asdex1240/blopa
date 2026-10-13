@@ -40,6 +40,8 @@ def test_health_reports_services():
     assert health["status"] == "ok"
     assert health["services"]["ollama"]["reachable"] is True
     assert health["services"]["n8n"] == {"configured": False, "reachable": False}
+    assert health["services"]["home_assistant"] == {"configured": False, "reachable": False}
+    assert health["services"]["matter"] == {"configured": False, "reachable": False}
     assert health["auth_required"] is False
 
 

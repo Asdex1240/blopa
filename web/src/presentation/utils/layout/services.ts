@@ -18,6 +18,13 @@ function n8nService(n8n: Health["services"]["n8n"]): Service {
     : { label: "n8n", state: "error", detail: "Configurado, pero no responde" }
 }
 
+function homeAssistantService(home: Health["services"]["home_assistant"]): Service {
+  if (!home.configured) return { label: "Home Assistant", state: "off", detail: "No configurado" }
+  return home.reachable
+    ? { label: "Home Assistant", state: "ok", detail: "Conectado" }
+    : { label: "Home Assistant", state: "error", detail: "Configurado, pero no responde" }
+}
+
 export function buildServices(health: Health | null, online: boolean): Service[] {
   if (!online || !health) {
     return SERVICE_LABELS.map((label) => ({ label, state: "error", detail: "Sin conexión con el servidor" }))
@@ -27,6 +34,6 @@ export function buildServices(health: Health | null, online: boolean): Service[]
     modelService(health),
     { label: "Ollama", state: ollama.reachable ? "ok" : "error", detail: ollama.reachable ? "Conectado" : "Sin conexión" },
     n8nService(n8n),
-    { label: "Home Assistant", state: home_assistant.configured ? "ok" : "off", detail: "Llega en la fase 5" },
+    homeAssistantService(home_assistant),
   ]
 }

@@ -8,7 +8,7 @@ Local personal assistant in Spanish: converses, searches current information on 
 
 ## Principles
 
-- **Local first:** the language model runs on the user's own hardware; no paid AI services.
+- **Local first:** the language model runs on the user's own hardware; no paid AI services. Known exception: devices without Matter (e.g. the Steren bulb) go through Home Assistant's Tuya cloud integration.
 - **Real data, not invented:** anything that changes (prices, news, flights, weather) comes from tools.
 - **Secure by default:** nothing exposed to the Internet; sensitive actions require an explicit "yes".
 - **Reproducible:** the same code runs on any machine, configured through `.env`.
@@ -73,7 +73,9 @@ src/
 - Everything runs in **Docker Compose** with persistent volumes and must survive a machine restart.
 - Compose profiles: `core`, `voice`, `n8n`, `home`. Optional services stay optional: if a service is not configured, its feature does not appear.
 - Development machine: Mac mini M4, 16 GB. Ollama runs in Docker (ARM64, CPU only: Docker does not pass the Metal GPU to containers).
-- Only exception to Docker: the Electron app runs on the host with Node.js; its dependencies stay in `electron/node_modules`, never global.
+- Exceptions to Docker, both on the host with Node.js and local dependencies (never global):
+  - The Electron app (`electron/`).
+  - The Matter server (`matter/`, `npm start`): Docker Desktop on macOS has no real host networking / IPv6 link-local, which Matter needs. It listens only on `127.0.0.1:5580`; Home Assistant reaches it at `ws://host.docker.internal:5580/ws`. Moves back into Docker on a Linux host.
 - Frontend tooling (npm, shadcn CLI, Vite dev server) runs in `node:22-slim` containers, e.g. `docker compose --profile dev up web-dev`.
 - Configuration lives in `.env` (copied from `.env.example`). Only `.env.example` is versioned; `.env` is in `.gitignore`.
 
@@ -91,7 +93,7 @@ src/
 | Web UI | Vite + React + TypeScript + Tailwind + shadcn/ui | Built in a Docker stage; FastAPI serves `web/dist` |
 | Desktop app | Electron | Runs on the host; wraps `http://localhost:8000`; microphone via browser APIs |
 | Automations | n8n Community Edition 2.42.7 | Profile `n8n`; webhooks via internal Docker network; editor on `127.0.0.1:5678` only |
-| Home automation | Home Assistant | Profile `home` |
+| Home automation | Home Assistant 2026.10.1 | Profile `home`; UI on `127.0.0.1:8123` only; Matter (local) and Tuya (cloud) integrations |
 | Speech to text | faster-whisper | Profile `voice`; `small` model |
 | Text to speech | `say` (macOS) / Piper | `say` for MVP |
 | Testing | pytest | Mock model |
@@ -112,6 +114,7 @@ src/
 | `BLOPA_DATA_DIR` | `/data` | SQLite location (volume `blopa_data`) |
 | `N8N_URL` | `http://n8n:5678` | n8n base URL; empty disables automations |
 | `HA_URL` / `HA_TOKEN` | *(empty)* | Home Assistant URL and token |
+| `MATTER_URL` | `ws://host.docker.internal:5580/ws` | Matter server; enables "Agregar dispositivo" |
 | `BLOPA_WHISPER_MODEL` | `small` | Transcription model |
 
 ### Security
@@ -120,6 +123,7 @@ src/
 - Optional `BLOPA_API_TOKEN` protects web and API access.
 - Closed list of actions per device type; sensitive actions always ask for confirmation.
 - Confirmation is enforced by the agent (`Tool.confirmation_for`), never left to the model.
+- Tools can declare `required_for(text)`; if the model answers such a message without using one of the required tools, the agent re-asks once. Home tools use it: orders require `home_control_device`, state questions require status/list, so the model never answers house state from memory.
 - Automations store only an n8n webhook path; the URL is built from `N8N_URL`.
 - `read_page` blocks private and local IPs (router, n8n, Home Assistant).
 - Secrets never go into Git.
@@ -178,14 +182,24 @@ blopa/
 │   ├── routes/
 │   │   ├── health.py
 │   │   ├── chat.py
-│   │   └── automations.py
+│   │   ├── automations.py
+│   │   ├── devices.py
+│   │   └── accounts.py
 │   ├── automations/
 │   │   ├── models.py
 │   │   ├── repository.py
 │   │   └── runner.py
+│   ├── home/
+│   │   ├── client.py
+│   │   ├── socket.py
+│   │   ├── catalog.py
+│   │   ├── devices.py
+│   │   ├── matter.py
+│   │   └── tuya.py
 │   ├── voice.py
 │   ├── concerns/
 │   │   ├── conversation_memory.py
+│   │   ├── mentions_home.py
 │   │   ├── time_limited.py
 │   │   └── truncates_text.py
 │   ├── search/
@@ -197,8 +211,9 @@ blopa/
 │       ├── search_web.py
 │       ├── read_page.py
 │       ├── run_automation.py
-│       └── home_assistant.py
+│       └── home.py
 ├── web/                 Vite + React app (see React rules)
+├── matter/              Matter server (host, npm)
 ├── electron/
 │   ├── package.json
 │   ├── main.js
