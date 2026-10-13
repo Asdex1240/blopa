@@ -4,7 +4,11 @@
   "private": true,
   "description": "Matter server for BLOPA, runs on the Mac host",
   "scripts": {
-    "start": "node --enable-source-maps node_modules/matter-server/dist/esm/MatterServer.js --storage-path data --primary-interface en1 --listen-address 127.0.0.1 --log-file data/matter-server.log"
+    "start": "node --enable-source-maps node_modules/matter-server/dist/esm/MatterServer.js --storage-path data --primary-interface en1 --listen-address 127.0.0.1 --log-file data/matter-server.log",
+    "service:install": "./service.sh install",
+    "service:uninstall": "./service.sh uninstall",
+    "service:status": "./service.sh status",
+    "service:logs": "./service.sh logs"
   },
   "dependencies": {
     "matter-server": "1.4.0"

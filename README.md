@@ -82,11 +82,20 @@ Home Assistant runs with the `home` profile. Its UI is only reachable from this 
 
 The Matter server runs on the Mac, outside Docker, because Docker Desktop cannot give containers the local network access Matter needs.
 
+Install it once as a macOS login service (LaunchAgent). It starts when you sign in and restarts if it crashes:
+
 ```bash
 cd matter
-npm install
-npm start
+npm run service:install
 ```
+
+| Command | Action |
+|---|---|
+| `npm run service:status` | Running state and PID |
+| `npm run service:logs` | Last log lines |
+| `npm run service:uninstall` | Stop it and remove the login service (data is kept) |
+
+The service runs from `~/Library/Application Support/BLOPA/matter`, because macOS blocks background processes from reading `~/Desktop` and `~/Documents`. Run `npm run service:install` again after updating `matter/package.json`. For a quick manual run: `npm install && npm start`.
 
 macOS asks once for **Local Network** permission; allow it. Then, in Home Assistant, the Matter integration points to `ws://host.docker.internal:5580/ws`.
 

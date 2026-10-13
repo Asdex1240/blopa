@@ -75,7 +75,7 @@ src/
 - Development machine: Mac mini M4, 16 GB. Ollama runs in Docker (ARM64, CPU only: Docker does not pass the Metal GPU to containers).
 - Exceptions to Docker, both on the host with Node.js and local dependencies (never global):
   - The Electron app (`electron/`).
-  - The Matter server (`matter/`, `npm start`): Docker Desktop on macOS has no real host networking / IPv6 link-local, which Matter needs. It listens only on `127.0.0.1:5580`; Home Assistant reaches it at `ws://host.docker.internal:5580/ws`. Moves back into Docker on a Linux host.
+  - The Matter server (`matter/`, installed as LaunchAgent `com.blopa.matter-server` with `npm run service:install`, running from `~/Library/Application Support/BLOPA/matter` because launchd cannot read `~/Desktop`): Docker Desktop on macOS has no real host networking / IPv6 link-local, which Matter needs. It listens only on `127.0.0.1:5580`; Home Assistant reaches it at `ws://host.docker.internal:5580/ws`. Moves back into Docker on a Linux host.
 - Frontend tooling (npm, shadcn CLI, Vite dev server) runs in `node:22-slim` containers, e.g. `docker compose --profile dev up web-dev`.
 - Configuration lives in `.env` (copied from `.env.example`). Only `.env.example` is versioned; `.env` is in `.gitignore`.
 
