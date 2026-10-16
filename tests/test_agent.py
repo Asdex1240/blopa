@@ -98,10 +98,22 @@ def test_forces_final_answer_after_max_steps():
     assert llm.calls[-1]["tools"] is None
 
 
-def test_adds_current_context_to_system_prompt():
+def test_adds_current_context_after_the_conversation():
     llm = FakeLlm("ok")
     Agent(llm, context=lambda: "Hoy es lunes 12 de octubre de 2026").reply("¿qué día es?")
-    assert llm.calls[0]["messages"][0]["content"].endswith("Contexto actual: Hoy es lunes 12 de octubre de 2026")
+    messages = llm.calls[0]["messages"]
+    assert messages[0] == {"role": "system", "content": SYSTEM_PROMPT}
+    assert messages[-1] == {"role": "system", "content": "Contexto actual: Hoy es lunes 12 de octubre de 2026"}
+
+
+def test_system_prompt_stays_identical_between_turns():
+    clock = iter(["Son las 10:00", "Son las 10:05"])
+    llm = FakeLlm("uno", "dos")
+    agent = Agent(llm, context=lambda: next(clock))
+    agent.reply("hola")
+    agent.reply("otra vez")
+    first, second = llm.calls[0]["messages"], llm.calls[1]["messages"]
+    assert second[: len(first) - 1] == first[:-1]
 
 
 class HouseTool(EchoTool):

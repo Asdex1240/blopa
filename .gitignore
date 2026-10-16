@@ -9,3 +9,4 @@ node_modules/
 blopa.md
 web/dist/
 matter/data/
+n8n/workflows/local/

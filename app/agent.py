@@ -97,6 +97,8 @@ class Agent(ConversationMemory):
         return Reply(text, tools_used)
 
     def _messages(self):
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}, *self.history]
         context = self.context()
-        prompt = f"{SYSTEM_PROMPT}\nContexto actual: {context}" if context else SYSTEM_PROMPT
-        return [{"role": "system", "content": prompt}, *self.history]
+        if context:
+            messages.append({"role": "system", "content": f"Contexto actual: {context}"})
+        return messages
